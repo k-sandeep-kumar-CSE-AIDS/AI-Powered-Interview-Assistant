@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <h2>Your Dashboard</h2>
+        <div class="card mt-4">
+            <div class="card-header">
+                Upload Your Resume
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('main.upload_resume') }}" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <input class="form-control" type="file" name="resume" accept=".pdf,.docx,.txt">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Upload</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                Quick Actions
+            </div>
+            <div class="card-body">
+                <a href="{{ url_for('main.practice_interview') }}" class="btn btn-success w-100 mb-2">Practice Interview</a>
+                <a href="#" class="btn btn-info w-100">View Past Sessions</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
