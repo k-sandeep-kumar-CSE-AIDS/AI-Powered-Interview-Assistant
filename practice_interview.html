@@ -1,0 +1,215 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <h2>Practice Interview</h2>
+            <p class="lead">Get real-time feedback on your answers</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Question Panel -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Interview Questions</h5>
+                </div>
+                <div class="card-body">
+                    {% if questions %}
+                        <div class="list-group" id="questions-list">
+                            {% for question in questions if question.strip() %}
+                                <button type="button" 
+                                        class="list-group-item list-group-item-action question-item"
+                                        data-question="{{ question }}">
+                                    {{ question }}
+                                </button>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="alert alert-warning">
+                            No questions available. Please generate questions first.
+                        </div>
+                        <a href="{{ url_for('main.interview_prep') }}" class="btn btn-primary">
+                            Generate Questions
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Answer Panel -->
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">Your Response</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <h6 id="current-question">Select a question to begin</h6>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-2">
+                            <button id="start-recording" class="btn btn-danger">
+                                <i class="bi bi-mic-fill"></i> Record Answer
+                            </button>
+                            <button id="stop-recording" class="btn btn-secondary" disabled>
+                                <i class="bi bi-stop-fill"></i> Stop
+                            </button>
+                        </div>
+                        <div class="form-text mb-3">Or type your answer below:</div>
+                        <textarea class="form-control" id="answer-text" rows="5" 
+                                  placeholder="Type your answer here..."></textarea>
+                    </div>
+                    
+                    <button id="submit-answer" class="btn btn-success w-100" disabled>
+                        <i class="bi bi-cloud-upload"></i> Submit for Evaluation
+                    </button>
+                </div>
+            </div>
+
+            <!-- Feedback Panel -->
+            <div class="card shadow-sm mt-4" id="feedback-section" style="display: none;">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">AI Feedback</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <h6>Evaluation Scores</h6>
+                        <div class="progress mb-2">
+                            <div class="progress-bar bg-success" role="progressbar" style="width: 75%">Relevance: 7.5/10</div>
+                        </div>
+                        <div class="progress mb-2">
+                            <div class="progress-bar bg-info" role="progressbar" style="width: 65%">Clarity: 6.5/10</div>
+                        </div>
+                        <div class="progress mb-2">
+                            <div class="progress-bar bg-warning" role="progressbar" style="width: 80%">Confidence: 8/10</div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h6>Detailed Feedback</h6>
+                        <div class="p-3 bg-light rounded" id="detailed-feedback">
+                            <!-- Will be populated by JavaScript -->
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="bi bi-lightbulb"></i> <strong>Tip:</strong> 
+                        <span id="improvement-tip">Try using the STAR method to structure your answers.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Bootstrap Icons -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+
+<!-- Include RecordRTC for audio recording -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/RecordRTC/5.6.2/RecordRTC.min.js"></script>
+
+<style>
+    .question-item.active {
+        background-color: #0d6efd;
+        color: white;
+    }
+    #feedback-section {
+        transition: all 0.3s ease;
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const questionItems = document.querySelectorAll('.question-item');
+        const currentQuestion = document.getElementById('current-question');
+        const answerText = document.getElementById('answer-text');
+        const submitButton = document.getElementById('submit-answer');
+        const feedbackSection = document.getElementById('feedback-section');
+        const detailedFeedback = document.getElementById('detailed-feedback');
+        const improvementTip = document.getElementById('improvement-tip');
+        
+        // Audio recording variables
+        let recorder;
+        const startBtn = document.getElementById('start-recording');
+        const stopBtn = document.getElementById('stop-recording');
+        
+        // Handle question selection
+        questionItems.forEach(item => {
+            item.addEventListener('click', function() {
+                questionItems.forEach(i => i.classList.remove('active'));
+                this.classList.add('active');
+                currentQuestion.textContent = this.dataset.question;
+                answerText.value = '';
+                submitButton.disabled = true;
+                feedbackSection.style.display = 'none';
+            });
+        });
+        
+        // Enable submit button when answer is provided
+        answerText.addEventListener('input', function() {
+            submitButton.disabled = !this.value.trim();
+        });
+        
+        // Handle answer submission (mock implementation)
+        submitButton.addEventListener('click', function() {
+            const question = currentQuestion.textContent;
+            const answer = answerText.value;
+            
+            if (!question || !answer) return;
+            
+            // In a real app, this would be an AJAX call to your backend
+            console.log('Submitting answer:', { question, answer });
+            
+            // Mock feedback response
+            detailedFeedback.innerHTML = `
+                <p><strong>Your answer was generally good but could be more structured.</strong></p>
+                <p>You covered the technical aspects well, but consider adding more details about 
+                the impact of your actions in past experiences.</p>
+                <p>Your tone was confident but try to avoid filler words like "um" and "ah".</p>
+            `;
+            
+            improvementTip.textContent = 'Try quantifying your achievements with numbers for greater impact.';
+            feedbackSection.style.display = 'block';
+        });
+        
+        // Audio recording functionality
+        startBtn.addEventListener('click', async function() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                recorder = new RecordRTC(stream, {
+                    type: 'audio',
+                    mimeType: 'audio/webm'
+                });
+                recorder.startRecording();
+                startBtn.disabled = true;
+                stopBtn.disabled = false;
+            } catch (err) {
+                console.error('Error accessing microphone:', err);
+                alert('Could not access microphone. Please check permissions.');
+            }
+        });
+        
+        stopBtn.addEventListener('click', function() {
+            if (!recorder) return;
+            
+            recorder.stopRecording(function() {
+                const blob = recorder.getBlob();
+                // In a real app, you would upload this blob to your server
+                console.log('Audio blob:', blob);
+                startBtn.disabled = false;
+                stopBtn.disabled = true;
+                
+                // Convert audio to text (mock implementation)
+                setTimeout(() => {
+                    answerText.value = "This would be the transcribed text from your audio answer in a real implementation.";
+                    submitButton.disabled = false;
+                }, 1000);
+            });
+        });
+    });
+</script>
+{% endblock %}
